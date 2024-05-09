@@ -25,10 +25,9 @@ class OggConverter {
       const stream = createWriteStream(oggPath);
       response.data.pipe(stream);
 
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve) => {
         stream.on("finish", () => {
           resolve(oggPath);
-          console.log("файл записан");
         });
       });
     } catch (error) {
@@ -46,12 +45,8 @@ class OggConverter {
           .output(outputPath)
           .on("end", () => {
             unlink(input, (error) => {
-              if (error) {
-                reject(`ошибка!! unlink ${error}`);
-              }
-              console.log("файл удален");
+              reject(`ошибка!! unlink ${error}`);
             });
-            console.log("файл конвертирован");
             resolve(outputPath);
           })
           .run();

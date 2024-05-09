@@ -1,39 +1,41 @@
-import { Telegraf } from "telegraf";
+import { Telegraf, session } from "telegraf";
 import config from "config";
 import { message } from "telegraf/filters";
+import { code } from "telegraf/format";
 import { ogg } from "./ogg.js";
 import { openai } from "./openai.js";
+import { COMMANDS } from "./commands/index.js";
+import { INITIAL_SESSION } from "./globalVars.js";
 
-let mode = "voice";
+const loadingMessage = code("жестко думаю");
 
 const bot = new Telegraf(config.get("BOT_TOKEN"));
+bot.use(
+  session({
+    defaultSession: () => INITIAL_SESSION
+  })
+);
 
-bot.command("start", async (ctx) => await ctx.reply(`прив ${ctx.message.from.id}`));
-
-bot.command("mode", async (ctx) => {
-  await ctx.reply(`Текущий режим ${mode}`);
-});
-
-bot.command("text", async (ctx) => {
-  mode = "text";
-  await ctx.reply(`Режим текста включен ${mode}`);
-});
-
-bot.command("voice", async (ctx) => {
-  mode = "voice";
-  await ctx.reply(`Режим войса включен ${mode}`);
+Object.keys(COMMANDS).forEach((command) => {
+  COMMANDS[command](bot);
 });
 
 bot.on(message("text"), async (ctx) => {
-  if (mode !== "text") {
-    ctx.reply("режим не текст");
+  ctx.session ??= INITIAL_SESSION;
+
+  if (ctx.session.mode !== "chat") {
+    ctx.reply("режим не чат");
     return;
   }
 
   try {
-    ctx.reply("жестко думаю");
-    const answer = await openai.answerTextMessage(ctx.message.text);
+    ctx.reply(loadingMessage);
+
+    ctx.session.messages.push({ role: "user", content: ctx.message.text });
+
+    const answer = await openai.answerTextMessage(ctx.session.messages);
     await ctx.reply(answer);
+    ctx.session.messages.push({ role: "assistant", content: answer });
   } catch (error) {
     await ctx.reply("ошибка!!");
     console.error(`ошибка!! ${error}`);
@@ -41,12 +43,14 @@ bot.on(message("text"), async (ctx) => {
 });
 
 bot.on(message("voice"), async (ctx) => {
-  if (mode !== "voice") {
+  ctx.session ??= INITIAL_SESSION;
+
+  if (ctx.session.mode !== "voice") {
     ctx.reply("режим не войс");
     return;
   }
 
-  ctx.reply("жестко думаю");
+  ctx.reply(loadingMessage);
 
   try {
     const userId = String(ctx.message.from.id);
@@ -54,10 +58,15 @@ bot.on(message("voice"), async (ctx) => {
     const link = await ctx.telegram.getFileLink(ctx.message.voice.file_id);
 
     const oggPath = await ogg.create(link, filename);
-    console.log("oggPath", oggPath);
     const mp3 = await ogg.toMp3(oggPath, filename);
+
     const text = await openai.transcription(mp3);
-    await ctx.reply(text);
+    await ctx.reply(code(`Ваш запрос: ${text}`));
+    ctx.session.messages.push({ role: "user", content: text });
+
+    const answer = await openai.answerTextMessage(ctx.session.messages);
+    await ctx.reply(answer);
+    ctx.session.messages.push({ role: "assistant", content: answer });
   } catch (error) {
     console.error(`ошибка!! ${error}`);
   }
@@ -66,10 +75,14 @@ bot.on(message("voice"), async (ctx) => {
 bot.launch();
 
 process.once("SIGINT", () => {
-  bot.telegram.sendMessage("жесткий дроп");
+  bot.telegram.sendMessage(431152718, "жесткий дроп");
+  console.log("жесткий дроп");
   bot.stop("SIGINT");
 });
 process.once("SIGTERM", () => {
-  bot.telegram.sendMessage("жесткий дроп");
+  bot.telegram.sendMessage(431152718, "жесткий дроп");
+  console.log("жесткий дроп");
   bot.stop("SIGTERM");
 });
+
+export default bot;

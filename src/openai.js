@@ -9,10 +9,10 @@ class MyOpenAI {
     });
   }
 
-  async answerTextMessage(text) {
+  async answerTextMessage(messages) {
     try {
       const complections = await this.openai.chat.completions.create({
-        messages: [{ role: "system", content: text }],
+        messages,
         model: "gpt-3.5-turbo"
       });
 
