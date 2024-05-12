@@ -1,11 +1,12 @@
 const MODES = {
+  DEFAULT: "default",
   VOICE: "voice",
   TEXT: "text",
   CHAT: "chat"
 };
 
 const INITIAL_SESSION = {
-  mode: MODES.VOICE,
+  mode: MODES.DEFAULT,
   messages: []
 };
 

@@ -1,13 +1,12 @@
-import { Telegraf, session } from "telegraf";
 import config from "config";
+import { Telegraf, session } from "telegraf";
 import { message } from "telegraf/filters";
-import { code } from "telegraf/format";
+
 import { ogg } from "./ogg.js";
 import { openai } from "./openai.js";
 import { COMMANDS } from "./commands/index.js";
-import { INITIAL_SESSION } from "./globalVars.js";
-
-const loadingMessage = code("жестко думаю");
+import { INITIAL_SESSION } from "./global/globalVars.js";
+import { EXIT_MESSAGE, LOADING_MESSAGE } from "./global/messages.js";
 
 const bot = new Telegraf(config.get("BOT_TOKEN"));
 bot.use(
@@ -21,15 +20,13 @@ Object.keys(COMMANDS).forEach((command) => {
 });
 
 bot.on(message("text"), async (ctx) => {
-  ctx.session ??= INITIAL_SESSION;
-
   if (ctx.session.mode !== "chat") {
     ctx.reply("режим не чат");
     return;
   }
 
   try {
-    ctx.reply(loadingMessage);
+    ctx.reply(LOADING_MESSAGE);
 
     ctx.session.messages.push({ role: "user", content: ctx.message.text });
 
@@ -43,14 +40,12 @@ bot.on(message("text"), async (ctx) => {
 });
 
 bot.on(message("voice"), async (ctx) => {
-  ctx.session ??= INITIAL_SESSION;
-
   if (ctx.session.mode !== "voice") {
     ctx.reply("режим не войс");
     return;
   }
 
-  ctx.reply(loadingMessage);
+  ctx.reply(LOADING_MESSAGE);
 
   try {
     const userId = String(ctx.message.from.id);
@@ -75,14 +70,10 @@ bot.on(message("voice"), async (ctx) => {
 bot.launch();
 
 process.once("SIGINT", () => {
-  bot.telegram.sendMessage(431152718, "жесткий дроп");
-  console.log("жесткий дроп");
+  bot.telegram.sendMessage(config.get("ADMIN_TG_ID"), EXIT_MESSAGE);
   bot.stop("SIGINT");
 });
 process.once("SIGTERM", () => {
-  bot.telegram.sendMessage(431152718, "жесткий дроп");
-  console.log("жесткий дроп");
+  bot.telegram.sendMessage(config.get("ADMIN_TG_ID"), EXIT_MESSAGE);
   bot.stop("SIGTERM");
 });
-
-export default bot;
