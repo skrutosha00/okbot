@@ -1,8 +1,9 @@
 const MODES = {
   DEFAULT: "default",
   VOICE: "voice",
-  TEXT: "text",
-  CHAT: "chat"
+  ONELINE: "oneline",
+  CHAT: "chat",
+  QUIZ: "quiz"
 };
 
 const INITIAL_SESSION = {

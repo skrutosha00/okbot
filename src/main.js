@@ -2,11 +2,11 @@ import config from "config";
 import { Telegraf, session } from "telegraf";
 import { message } from "telegraf/filters";
 
-import { ogg } from "./ogg.js";
-import { openai } from "./openai.js";
 import { COMMANDS } from "./commands/index.js";
-import { INITIAL_SESSION } from "./global/globalVars.js";
-import { EXIT_MESSAGE, LOADING_MESSAGE } from "./global/messages.js";
+import { INITIAL_SESSION, MODES } from "./global/globalVars.js";
+import { EXIT_MESSAGE, MODE_INIT_MESSAGE } from "./global/messages.js";
+import gptTalk from "./tasks/gptTalk.js";
+import voiceTalk from "./tasks/voiceTalk.js";
 
 const bot = new Telegraf(config.get("BOT_TOKEN"));
 bot.use(
@@ -20,50 +20,42 @@ Object.keys(COMMANDS).forEach((command) => {
 });
 
 bot.on(message("text"), async (ctx) => {
-  if (ctx.session.mode !== "chat") {
-    ctx.reply("режим не чат");
+  const mode = ctx.session.mode;
+
+  if (mode !== MODES.CHAT && mode !== MODES.ONELINE) {
+    await ctx.reply(`Перейдите в режим /${MODES.CHAT} или /${MODES.ONELINE}`);
     return;
   }
 
-  try {
-    ctx.reply(LOADING_MESSAGE);
-
-    ctx.session.messages.push({ role: "user", content: ctx.message.text });
-
-    const answer = await openai.answerTextMessage(ctx.session.messages);
-    await ctx.reply(answer);
-    ctx.session.messages.push({ role: "assistant", content: answer });
-  } catch (error) {
-    await ctx.reply("ошибка!!");
-    console.error(`ошибка!! ${error}`);
-  }
+  gptTalk(ctx, mode);
 });
 
 bot.on(message("voice"), async (ctx) => {
-  if (ctx.session.mode !== "voice") {
-    ctx.reply("режим не войс");
+  if (ctx.session.mode !== MODES.VOICE) {
+    ctx.reply(`Выберите режим /${MODES.VOICE} для голосового чата`);
     return;
   }
 
-  ctx.reply(LOADING_MESSAGE);
+  voiceTalk(ctx);
+});
 
+bot.on("callback_query", async (ctx) => {
   try {
-    const userId = String(ctx.message.from.id);
-    const filename = `${userId}_${ctx.message.message_id}`;
-    const link = await ctx.telegram.getFileLink(ctx.message.voice.file_id);
+    const clickedButton = ctx.callbackQuery.data;
 
-    const oggPath = await ogg.create(link, filename);
-    const mp3 = await ogg.toMp3(oggPath, filename);
+    ctx.answerCbQuery(undefined, {
+      show_alert: false
+    });
 
-    const text = await openai.transcription(mp3);
-    await ctx.reply(code(`Ваш запрос: ${text}`));
-    ctx.session.messages.push({ role: "user", content: text });
-
-    const answer = await openai.answerTextMessage(ctx.session.messages);
-    await ctx.reply(answer);
-    ctx.session.messages.push({ role: "assistant", content: answer });
+    for (let mode of Object.values(MODES)) {
+      if (clickedButton === mode) {
+        ctx.session.mode = mode;
+        await ctx.reply(MODE_INIT_MESSAGE[mode]);
+        break;
+      }
+    }
   } catch (error) {
-    console.error(`ошибка!! ${error}`);
+    console.log(`ошибка в callback_query: ${error}`);
   }
 });
 
