@@ -21,6 +21,7 @@ export default async function voiceTalk(ctx) {
     await ctx.reply(code(`Ваш запрос: ${text}`));
     ctx.session.messages.push({ role: "user", content: text });
 
+    ctx.sendChatAction("typing");
     const answer = await openai.answerTextMessage(ctx.session.messages);
     await ctx.reply(answer);
     ctx.session.messages.push({ role: "assistant", content: answer });
