@@ -8,11 +8,9 @@ const inlineKeyboard = [
   [Markup.button.callback("📚 Квиз от GPT (in progress)", MODES.QUIZ)]
 ];
 
-export default function start(bot) {
-  bot.command("start", async (ctx) => {
-    ctx.session = INITIAL_SESSION;
+export default async function start(ctx) {
+  ctx.session = INITIAL_SESSION;
 
-    await ctx.reply(`прив ${ctx.message.from.id}`);
-    await ctx.reply("выбери чем заняться", Markup.inlineKeyboard(inlineKeyboard));
-  });
+  await ctx.reply(`прив ${ctx.message.from.id}`);
+  await ctx.reply("выбери чем заняться", Markup.inlineKeyboard(inlineKeyboard));
 }

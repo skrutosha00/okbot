@@ -15,8 +15,9 @@ export default async function gptTalk(ctx, mode) {
 
     if (mode === MODES.CHAT) {
       ctx.session.messages.push({ role: "assistant", content: answer });
-    } else {
+    } else if (mode === MODES.ONELINE) {
       ctx.session.messages = [];
+    } else if (mode === MODES.QUIZ) {
     }
   } catch (error) {
     await ctx.reply(ERROR_MESSAGE);

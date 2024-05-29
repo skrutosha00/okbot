@@ -2,28 +2,32 @@ import config from "config";
 import { Telegraf, session } from "telegraf";
 import { message } from "telegraf/filters";
 
-import { COMMANDS } from "./commands/index.js";
+import { BINDED_COMMANDS, COMMANDS } from "./commands/index.js";
 import { INITIAL_SESSION, MODES } from "./global/globalVars.js";
-import { EXIT_MESSAGE, MODE_INIT_MESSAGE } from "./global/messages.js";
+import { EXIT_MESSAGE } from "./global/messages.js";
 import gptTalk from "./tasks/gptTalk.js";
 import voiceTalk from "./tasks/voiceTalk.js";
 
 const bot = new Telegraf(config.get("BOT_TOKEN"));
+
 bot.use(
   session({
     defaultSession: () => INITIAL_SESSION
   })
 );
 
-Object.keys(COMMANDS).forEach((command) => {
-  COMMANDS[command](bot);
+Object.keys(BINDED_COMMANDS).forEach((command) => {
+  BINDED_COMMANDS[command](bot);
 });
 
 bot.on(message("text"), async (ctx) => {
+  const MODES_FOR_TEXT = [MODES.CHAT, MODES.ONELINE, MODES.QUIZ];
   const mode = ctx.session.mode;
 
-  if (mode !== MODES.CHAT && mode !== MODES.ONELINE) {
-    await ctx.reply(`Перейдите в режим /${MODES.CHAT} или /${MODES.ONELINE}`);
+  if (!MODES_FOR_TEXT.includes(mode)) {
+    await ctx.reply(
+      `Данный режим не поддерживает текстовые сообщения. Перейдите в режим /${MODES.CHAT} или /${MODES.ONELINE}`
+    );
     return;
   }
 
@@ -47,19 +51,17 @@ bot.on("callback_query", async (ctx) => {
       show_alert: false
     });
 
-    for (let mode of Object.values(MODES)) {
-      if (clickedButton === mode) {
-        ctx.session.mode = mode;
-        await ctx.reply(MODE_INIT_MESSAGE[mode]);
-        break;
-      }
+    if (Object.keys(COMMANDS).includes(clickedButton)) {
+      COMMANDS[clickedButton](ctx);
     }
   } catch (error) {
     console.log(`ошибка в callback_query: ${error}`);
   }
 });
 
-bot.launch();
+bot.launch({
+  dropPendingUpdates: true
+});
 
 process.once("SIGINT", () => {
   bot.telegram.sendMessage(config.get("ADMIN_TG_ID"), EXIT_MESSAGE);
