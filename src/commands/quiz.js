@@ -1,16 +1,15 @@
 import { MODES } from "../global/globalVars.js";
+import { MODE_INIT_MESSAGE } from "../global/messages.js";
 
-export default function quiz(bot) {
-  bot.command(MODES.QUIZ, async (ctx) => {
-    ctx.session.mode = MODES.QUIZ;
-    await ctx.reply(`Режим квиза включен ✅`);
-    await ctx.replyWithQuiz(
-      "Самый лучший день?",
-      ["Сегодня", "Я снова маленький солнце яркое", "Будто челюсть петикантропа"],
-      {
-        correct_option_id: 1,
-        explanation: "Потому что я снова маленький солнце яркое"
-      }
-    );
-  });
+export default async function quiz(ctx) {
+  ctx.session.mode = MODES.QUIZ;
+  await ctx.reply(MODE_INIT_MESSAGE[MODES.QUIZ]);
+  await ctx.replyWithQuiz(
+    "Самый лучший день?",
+    ["Сегодня", "Я снова маленький солнце яркое", "Будто челюсть петикантропа"],
+    {
+      correct_option_id: 1,
+      explanation: "Потому что я снова маленький солнце яркое"
+    }
+  );
 }
