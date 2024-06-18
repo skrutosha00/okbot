@@ -1,7 +1,7 @@
 import { code } from "telegraf/format";
 
-import { ogg } from "../ogg.js";
-import { openai } from "../openai.js";
+import { ogg } from "./ogg.js";
+import { openai } from "./openai.js";
 import { LOADING_MESSAGE } from "../global/messages.js";
 
 export default async function voiceTalk(ctx) {
@@ -26,6 +26,6 @@ export default async function voiceTalk(ctx) {
     await ctx.reply(answer);
     ctx.session.messages.push({ role: "assistant", content: answer });
   } catch (error) {
-    console.error(`ошибка в voiceTalk: ${error}`);
+    console.error(`voiceTalk: ${error}`);
   }
 }

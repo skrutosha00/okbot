@@ -6,6 +6,7 @@ import oneline from "./oneline.js";
 import voice from "./voice.js";
 import quiz from "./quiz.js";
 import clear from "./clear.js";
+import getId from "./getId.js";
 
 export const COMMANDS = {
   start,
@@ -24,5 +25,6 @@ export const BINDED_COMMANDS = {
   chat: (bot) => bot.command(MODES.CHAT, chat),
   voice: (bot) => bot.command(MODES.VOICE, voice),
   clear: (bot) => bot.command("clear", clear),
-  quiz: (bot) => bot.command(MODES.QUIZ, quiz)
+  quiz: (bot) => bot.command(MODES.QUIZ, quiz),
+  getId: (bot) => bot.command("getId", getId)
 };

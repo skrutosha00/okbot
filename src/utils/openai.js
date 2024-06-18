@@ -18,7 +18,7 @@ class MyOpenAI {
 
       return complections.choices[0].message.content;
     } catch (error) {
-      console.error(`ошибка!! answerTextMessage ${error}`);
+      console.error(`answerTextMessage: ${error}`);
     }
   }
 
@@ -31,7 +31,7 @@ class MyOpenAI {
 
       return response.text;
     } catch (error) {
-      console.error(`ошибка!! transcription ${error}`);
+      console.error(`transcription: ${error}`);
     }
   }
 }

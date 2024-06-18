@@ -5,8 +5,8 @@ import { message } from "telegraf/filters";
 import { BINDED_COMMANDS, COMMANDS } from "./commands/index.js";
 import { INITIAL_SESSION, MODES } from "./global/globalVars.js";
 import { EXIT_MESSAGE } from "./global/messages.js";
-import gptTalk from "./tasks/gptTalk.js";
-import voiceTalk from "./tasks/voiceTalk.js";
+import gptTalk from "./utils/gptTalk.js";
+import voiceTalk from "./utils/voiceTalk.js";
 
 const bot = new Telegraf(config.get("BOT_TOKEN"));
 
@@ -21,7 +21,7 @@ Object.keys(BINDED_COMMANDS).forEach((command) => {
 });
 
 bot.on(message("text"), async (ctx) => {
-  const MODES_FOR_TEXT = [MODES.CHAT, MODES.ONELINE, MODES.QUIZ];
+  const MODES_FOR_TEXT = [MODES.CHAT, MODES.ONELINE];
   const mode = ctx.session.mode;
 
   if (!MODES_FOR_TEXT.includes(mode)) {
@@ -31,7 +31,21 @@ bot.on(message("text"), async (ctx) => {
     return;
   }
 
-  gptTalk(ctx, mode);
+  if (mode === MODES.CHAT) {
+    ctx.session.messages.push({ role: "user", content: ctx.message.text });
+    const answer = await gptTalk(ctx);
+    await ctx.reply(answer);
+
+    ctx.session.messages.push({ role: "assistant", content: answer });
+  }
+
+  if (mode === MODES.ONELINE) {
+    ctx.session.messages.push({ role: "user", content: ctx.message.text });
+    const answer = await gptTalk(ctx);
+    await ctx.reply(answer);
+
+    ctx.session.messages = [];
+  }
 });
 
 bot.on(message("voice"), async (ctx) => {
@@ -54,8 +68,12 @@ bot.on("callback_query", async (ctx) => {
     if (Object.keys(COMMANDS).includes(clickedButton)) {
       COMMANDS[clickedButton](ctx);
     }
+
+    if (clickedButton.includes("quizCb")) {
+      ctx.session.quiz.checkAnswer(ctx);
+    }
   } catch (error) {
-    console.log(`ошибка в callback_query: ${error}`);
+    console.log(`callback_query: ${error}`);
   }
 });
 

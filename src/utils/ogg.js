@@ -14,7 +14,7 @@ class OggConverter {
 
   async create(url, filename) {
     try {
-      const oggPath = resolve(__dirname, `../voices`, `${filename}.ogg`);
+      const oggPath = resolve(__dirname, `../../voices`, `${filename}.ogg`);
 
       const response = await axios({
         method: "get",
@@ -31,7 +31,7 @@ class OggConverter {
         });
       });
     } catch (error) {
-      console.error(`ошибка!! create ${error}`);
+      console.error(`ogg create: ${error}`);
     }
   }
 
@@ -45,14 +45,14 @@ class OggConverter {
           .output(outputPath)
           .on("end", () => {
             unlink(input, (error) => {
-              reject(`ошибка!! unlink ${error}`);
+              reject(`unlink: ${error}`);
             });
             resolve(outputPath);
           })
           .run();
       });
     } catch (error) {
-      console.error(`ошибка!! toMp3 ${error}`);
+      console.error(`ogg toMp3: ${error}`);
     }
   }
 }
